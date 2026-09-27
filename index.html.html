@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Desktop Chatbot</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // كلمة السر المشفرة لـ "MySecretPass123"
+  // (استبدل هذا الرمز بالرمز المشفر لكلمة السر الخاصة بك)
+  const targetHash = "8c72473463a56e07a3c7b39a37e1a3848b776c5b9f91a547796d13d7e5e3d7cb"; 
+
+  async function checkPassword() {
+    const input = prompt("أدخل كلمة السر للوصول للشات:");
+    if (!input) {
+      document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:50px;'>عذراً، الوصول غير مصرح به.</h2>";
+      window.stop();
+      return;
+    }
+
+    
+    const encoder = new TextEncoder();
+    const data = encoder.encode(input);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    if (inputHash !== targetHash) {
+      alert("كلمة السر غير صحيحة!");
+      document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:50px;'>عذراً، كلمة السر خاطئة.</h2>";
+      window.stop();
+    }
+  }
+
+  checkPassword();
+</script>
+</script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            base: '#0f172a',
+                            surface: '#1e293b',
+                            card: '#334155',
+                            border: '#475569',
+                            hover: '#334155'
+                        },
+                        accent: {
+                            primary: '#6366f1',
+                            hover: '#4f46e5',
+                            glow: 'rgba(99, 102, 241, 0.25)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Highlight.js for code rendering -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        /* Markdown Code Styles */
+        .prose pre {
+            background-color: #0f172a !important;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .prose code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="bg-dark-base text-slate-100 font-sans h-full flex flex-col overflow-hidden select-none">
+
+    <!-- Window Titlebar (Simulated Desktop Frame) -->
+    <header class="bg-slate-950 border-b border-slate-800 h-10 flex items-center justify-between px-3 shrink-0">
+        <div class="flex items-center space-x-2 text-xs font-semibold text-slate-400">
+            <i class="fa-solid font-bold fa-robot text-indigo-400 text-sm"></i>
+            <span>Apex AI Studio Desktop</span>
+            <span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] px-1.5 py-0.5 rounded">v1.2</span>
+        </div>
+        
+        <!-- Status Indicator & Controls -->
+        <div class="flex items-center space-x-4">
+            <div id="statusIndicator" class="flex items-center space-x-1.5 text-xs text-amber-400">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <span id="statusText" class="text-[11px] font-medium">API Key Needed</span>
+            </div>
+            <div class="h-4 w-[1px] bg-slate-800"></div>
+            <button id="btnSettings" class="text-slate-400 hover:text-white transition p-1 text-xs" title="API Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <div class="flex flex-1 h-[calc(100vh-2.5rem)] overflow-hidden relative">
+        
+        <!-- Sidebar: Chat History -->
+        <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 transition-all duration-200">
+            <!-- New Chat & Search -->
+            <div class="p-3 space-y-2">
+                <button id="btnNewChat" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-3 rounded-lg text-sm flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>New Conversation</span>
+                </button>
+            </div>
+
+            <!-- History Item List -->
+            <div class="flex-1 overflow-y-auto px-2 space-y-1" id="chatHistoryList">
+                <div class="px-3 py-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Recent Chats</div>
+                <!-- Dynamic Items Inserted Here -->
+            </div>
+
+            <!-- Footer Info -->
+            <div class="p-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                <span class="truncate">Provider: <strong id="lblActiveProvider" class="text-slate-200">Groq API</strong></span>
+                <button id="btnClearHistory" class="text-slate-500 hover:text-rose-400 p-1" title="Clear All History">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="flex-1 flex flex-col bg-dark-base relative overflow-hidden">
+            
+            <!-- Chat Header / Controls -->
+            <div class="h-14 bg-slate-900/60 backdrop-blur-md border-b border-slate-800 px-4 flex items-center justify-between z-10">
+                <div class="flex items-center space-x-3">
+                    <button id="btnToggleSidebar" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h2 id="currentChatTitle" class="text-sm font-semibold text-slate-100 truncate max-w-xs md:max-w-md">New Conversation</h2>
+                        <p class="text-[11px] text-slate-400" id="currentModelLabel">Model: Qwen 2.5 Coder 32B</p>
+                    </div>
+                </div>
+
+                <!-- Model Selector Dropdown -->
+                <div class="flex items-center space-x-2">
+                    <label for="modelSelect" class="text-xs text-slate-400 hidden sm:inline">Model:</label>
+                    <select id="modelSelect" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
+                        <option value="qwen-2.5-coder-32b">Qwen 2.5 Coder 32B (Groq)</option>
+                        <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Groq)</option>
+                        <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill 70B</option>
+                        <option value="local-model">Custom Local Server (Ollama / LM Studio)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Messages Scroll View -->
+            <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+                <!-- Welcome Banner -->
+                <div id="welcomeState" class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
+                    <div class="w-16 h-16 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 text-2xl shadow-xl">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <div class="max-w-md space-y-2">
+                        <h1 class="text-xl font-bold text-slate-100">AI Assistant Ready</h1>
+                        <p class="text-xs text-slate-400">Connect your Groq or OpenRouter API key to start fast streaming inference, or link your local LM Studio / Colab endpoint.</p>
+                    </div>
+                    <div class="flex gap-2 text-xs">
+                        <button onclick="setPromptSuggestion('Write a Python GUI script using CustomTkinter for a file downloader.')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300">
+                            💻 Python GUI Script
+                        </button>
+                        <button onclick="setPromptSuggestion('Explain how to connect Python desktop client to OpenAI API format.')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300">
+                            🔗 Connect API to Python
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="p-3 md:p-4 bg-slate-900/80 border-t border-slate-800">
+                <form id="chatForm" class="relative flex items-end bg-slate-800/90 border border-slate-700 focus-within:border-indigo-500 rounded-xl px-3 py-2 transition shadow-inner">
+                    <textarea id="userInput" rows="1" placeholder="Type your message or prompt here..." class="w-full bg-transparent text-slate-100 text-sm focus:outline-none resize-none max-h-32 min-h-[38px] py-1.5 pr-10"></textarea>
+                    
+                    <button type="submit" id="btnSend" class="absolute right-2 bottom-2 bg-indigo-600 hover:bg-indigo-500 text-white w-8 h-8 rounded-lg flex items-center justify-center transition disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </form>
+                <div class="flex justify-between items-center px-1 mt-2 text-[10px] text-slate-500">
+                    <span>Press <kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-700">Enter</kbd> to send, <kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-700">Shift + Enter</kbd> for line break.</span>
+                    <span id="charCounter">0 chars</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- API Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-5">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i>
+                    <h3 class="font-bold text-slate-100 text-base">API & Server Configuration</h3>
+                </div>
+                <button id="btnCloseModal" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <!-- Provider Select -->
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">API Provider</label>
+                    <select id="apiProviderSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
+                        <option value="groq">Groq Cloud (Fast & Free Tier)</option>
+                        <option value="openrouter">OpenRouter API</option>
+                        <option value="local">Local Server / Ngrok / Colab (LM Studio / Ollama)</option>
+                    </select>
+                </div>
+
+                <!-- API Key Input -->
+                <div id="apiKeyContainer">
+                    <label class="block font-semibold text-slate-300 mb-1">API Key</label>
+                    <input type="password" id="txtApiKey" placeholder="gsk_..." class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
+                    <p class="text-[10px] text-slate-500 mt-1">Keys are stored locally in your browser/app storage only.</p>
+                </div>
+
+                <!-- Custom Endpoint URL (for local / colab) -->
+                <div id="endpointContainer">
+                    <label class="block font-semibold text-slate-300 mb-1">Endpoint URL</label>
+                    <input type="text" id="txtEndpointUrl" placeholder="http://localhost:1234/v1" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+                <button id="btnSaveSettings" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-xs transition">
+                    Save Configuration
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* Application State */
+        const state = {
+            apiKey: localStorage.getItem('chatbot_api_key') || '',
+            provider: localStorage.getItem('chatbot_provider') || 'groq',
+            endpoint: localStorage.getItem('chatbot_endpoint') || 'https://api.groq.com/openai/v1',
+            selectedModel: 'qwen-2.5-coder-32b',
+            chats: JSON.parse(localStorage.getItem('chatbot_chats') || '[]'),
+            currentChatId: null
+        };
+
+        /* DOM Elements */
+        const el = {
+            settingsModal: document.getElementById('settingsModal'),
+            btnSettings: document.getElementById('btnSettings'),
+            btnCloseModal: document.getElementById('btnCloseModal'),
+            btnSaveSettings: document.getElementById('btnSaveSettings'),
+            apiProviderSelect: document.getElementById('apiProviderSelect'),
+            txtApiKey: document.getElementById('txtApiKey'),
+            txtEndpointUrl: document.getElementById('txtEndpointUrl'),
+            statusIndicator: document.getElementById('statusIndicator'),
+            statusText: document.getElementById('statusText'),
+            modelSelect: document.getElementById('modelSelect'),
+            chatForm: document.getElementById('chatForm'),
+            userInput: document.getElementById('userInput'),
+            messagesContainer: document.getElementById('messagesContainer'),
+            welcomeState: document.getElementById('welcomeState'),
+            chatHistoryList: document.getElementById('chatHistoryList'),
+            btnNewChat: document.getElementById('btnNewChat'),
+            lblActiveProvider: document.getElementById('lblActiveProvider'),
+            currentChatTitle: document.getElementById('currentChatTitle'),
+            currentModelLabel: document.getElementById('currentModelLabel'),
+            sidebar: document.getElementById('sidebar'),
+            btnToggleSidebar: document.getElementById('btnToggleSidebar'),
+            btnClearHistory: document.getElementById('btnClearHistory'),
+            charCounter: document.getElementById('charCounter')
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            registerEvents();
+        });
+
+        function initApp() {
+            // Load saved settings
+            el.txtApiKey.value = state.apiKey;
+            el.apiProviderSelect.value = state.provider;
+            el.txtEndpointUrl.value = state.endpoint;
+            updateProviderUI();
+            updateStatusIndicator();
+            renderChatHistory();
+
+            if (!state.currentChatId && state.chats.length > 0) {
+                loadChat(state.chats[0].id);
+            }
+        }
+
+        function registerEvents() {
+            // Settings Modal Toggle
+            el.btnSettings.addEventListener('click', () => el.settingsModal.classList.remove('hidden'), el.settingsModal.classList.add('flex'));
+            el.btnCloseModal.addEventListener('click', () => el.settingsModal.classList.add('hidden'), el.settingsModal.classList.remove('flex'));
+
+            el.apiProviderSelect.addEventListener('change', updateProviderUI);
+
+            // Save Settings
+            el.btnSaveSettings.addEventListener('click', () => {
+                state.apiKey = el.txtApiKey.value.trim();
+                state.provider = el.apiProviderSelect.value;
+                state.endpoint = el.txtEndpointUrl.value.trim();
+
+                localStorage.setItem('chatbot_api_key', state.apiKey);
+                localStorage.setItem('chatbot_provider', state.provider);
+                localStorage.setItem('chatbot_endpoint', state.endpoint);
+
+                updateStatusIndicator();
+                el.settingsModal.classList.add('hidden');
+                el.settingsModal.classList.remove('flex');
+            });
+
+            // Model Selection
+            el.modelSelect.addEventListener('change', (e) => {
+                state.selectedModel = e.target.value;
+                el.currentModelLabel.textContent = `Model: ${e.target.options[e.target.selectedIndex].text}`;
+            });
+
+            // Auto-resize textarea
+            el.userInput.addEventListener('input', () => {
+                el.userInput.style.height = 'auto';
+                el.userInput.style.height = `${Math.min(el.userInput.scrollHeight, 128)}px`;
+                el.charCounter.textContent = `${el.userInput.value.length} chars`;
+            });
+
+            // Key press inside input
+            el.userInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    el.chatForm.dispatchEvent(new Event('submit'));
+                }
+            });
+
+            // Submit Chat Form
+            el.chatForm.addEventListener('submit', handleChatSubmit);
+
+            // New Chat Button
+            el.btnNewChat.addEventListener('click', createNewChat);
+
+            // Toggle Sidebar
+            el.btnToggleSidebar.addEventListener('click', () => {
+                el.sidebar.classList.toggle('-ml-64');
+            });
+
+            // Clear All History
+            el.btnClearHistory.addEventListener('click', () => {
+                if (confirm('Are you sure you want to delete all saved conversations?')) {
+                    state.chats = [];
+                    state.currentChatId = null;
+                    localStorage.removeItem('chatbot_chats');
+                    renderChatHistory();
+                    showWelcomeScreen();
+                }
+            });
+        }
+
+        function updateProviderUI() {
+            const provider = el.apiProviderSelect.value;
+            if (provider === 'groq') {
+                el.txtEndpointUrl.value = 'https://api.groq.com/openai/v1';
+                el.lblActiveProvider.textContent = 'Groq Cloud';
+            } else if (provider === 'openrouter') {
+                el.txtEndpointUrl.value = 'https://openrouter.ai/api/v1';
+                el.lblActiveProvider.textContent = 'OpenRouter';
+            } else {
+                el.lblActiveProvider.textContent = 'Local / Custom Server';
+            }
+        }
+
+        function updateStatusIndicator() {
+            if (state.provider !== 'local' && !state.apiKey) {
+                el.statusIndicator.className = 'flex items-center space-x-1.5 text-xs text-amber-400';
+                el.statusText.textContent = 'API Key Needed';
+            } else {
+                el.statusIndicator.className = 'flex items-center space-x-1.5 text-xs text-emerald-400';
+                el.statusText.textContent = 'Ready';
+            }
+        }
+
+        function setPromptSuggestion(text) {
+            el.userInput.value = text;
+            el.userInput.dispatchEvent(new Event('input'));
+            el.userInput.focus();
+        }
+
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const text = el.userInput.value.trim();
+            if (!text) return;
+
+            if (state.provider !== 'local' && !state.apiKey) {
+                alert('Please configure your API Key in Settings first.');
+                el.settingsModal.classList.remove('hidden');
+                el.settingsModal.classList.add('flex');
+                return;
+            }
+
+            // Ensure active chat exists
+            if (!state.currentChatId) {
+                createNewChat();
+            }
+
+            const currentChat = state.chats.find(c => c.id === state.currentChatId);
+            
+            // Set chat title if first message
+            if (currentChat.messages.length === 0) {
+                currentChat.title = text.length > 28 ? text.substring(0, 28) + '...' : text;
+                el.currentChatTitle.textContent = currentChat.title;
+            }
+
+            // Push User Message
+            const userMsg = { role: 'user', content: text, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
+            currentChat.messages.push(userMsg);
+            
+            // Reset Input UI
+            el.userInput.value = '';
+            el.userInput.style.height = 'auto';
+            el.charCounter.textContent = '0 chars';
+            
+            // Hide welcome screen if present
+            if (el.welcomeState) el.welcomeState.remove();
+
+            // Render Messages
+            renderMessages();
+
+            // Bot Response Placeholder
+            const assistantMsg = { role: 'assistant', content: '', timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
+            currentChat.messages.push(assistantMsg);
+            
+            const messageIndex = currentChat.messages.length - 1;
+            renderMessages();
+
+            try {
+                // Call OpenAI-Compatible Endpoint API
+                const endpoint = `${state.endpoint.replace(/\/+$/, '')}/chat/completions`;
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: state.selectedModel,
+                        messages: currentChat.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
+                        stream: false
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned status ${response.status}`);
+                }
+
+                const data = await response.json();
+                const resultText = data.choices[0]?.message?.content || 'No response generated.';
+
+                // Update assistant content
+                currentChat.messages[messageIndex].content = resultText;
+                saveChatsToStorage();
+                renderMessages();
+
+            } catch (err) {
+                currentChat.messages[messageIndex].content = `⚠️ **Error connecting to API:** ${err.message}. Please check your key or server endpoint in settings.`;
+                saveChatsToStorage();
+                renderMessages();
+            }
+        }
+
+        function createNewChat() {
+            const newChat = {
+                id: 'chat_' + Date.now(),
+                title: 'New Conversation',
+                messages: []
+            };
+            state.chats.unshift(newChat);
+            state.currentChatId = newChat.id;
+            saveChatsToStorage();
+            renderChatHistory();
+            showWelcomeScreen();
+        }
+
+        function loadChat(chatId) {
+            state.currentChatId = chatId;
+            const chat = state.chats.find(c => c.id === chatId);
+            if (!chat) return;
+
+            el.currentChatTitle.textContent = chat.title;
+            renderChatHistory();
+
+            if (chat.messages.length === 0) {
+                showWelcomeScreen();
+            } else {
+                renderMessages();
+            }
+        }
+
+        function showWelcomeScreen() {
+            el.messagesContainer.innerHTML = `
+                <div id="welcomeState" class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
+                    <div class="w-16 h-16 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 text-2xl shadow-xl">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <div class="max-w-md space-y-2">
+                        <h1 class="text-xl font-bold text-slate-100">AI Assistant Ready</h1>
+                        <p class="text-xs text-slate-400">Connect your Groq or OpenRouter API key to start fast streaming inference, or link your local LM Studio / Colab endpoint.</p>
+                    </div>
+                    <div class="flex gap-2 text-xs">
+                        <button onclick="setPromptSuggestion('Write a Python GUI script using CustomTkinter for a file downloader.')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300">
+                            💻 Python GUI Script
+                        </button>
+                        <button onclick="setPromptSuggestion('Explain how to connect Python desktop client to OpenAI API format.')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300">
+                            🔗 Connect API to Python
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMessages() {
+            const chat = state.chats.find(c => c.id === state.currentChatId);
+            if (!chat || chat.messages.length === 0) return;
+
+            el.messagesContainer.innerHTML = '';
+
+            chat.messages.forEach(msg => {
+                const isUser = msg.role === 'user';
+                const msgWrapper = document.createElement('div');
+                msgWrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`;
+
+                const formattedContent = isUser ? escapeHtml(msg.content) : marked.parse(msg.content);
+
+                msgWrapper.innerHTML = `
+                    <div class="flex items-start space-x-2.5 max-w-[85%] ${isUser ? 'flex-row-reverse space-x-reverse' : ''}">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${isUser ? 'bg-indigo-600 text-white' : 'bg-slate-800 border border-slate-700 text-indigo-400'}">
+                            <i class="${isUser ? 'fa-solid fa-user' : 'fa-solid fa-bot'}"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="p-3.5 rounded-2xl text-xs sm:text-sm prose dark:prose-invert max-w-none ${isUser ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800/90 border border-slate-700 text-slate-200 rounded-tl-none'} shadow-md">
+                                ${formattedContent}
+                            </div>
+                            <div class="text-[10px] text-slate-500 ${isUser ? 'text-right' : 'text-left'}">${msg.timestamp}</div>
+                        </div>
+                    </div>
+                `;
+
+                el.messagesContainer.appendChild(msgWrapper);
+            });
+
+            // Highlight Code Blocks
+            hljs.highlightAll();
+
+            // Auto-scroll to bottom
+            el.messagesContainer.scrollTop = el.messagesContainer.scrollHeight;
+        }
+
+        function renderChatHistory() {
+            el.chatHistoryList.innerHTML = '<div class="px-3 py-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Recent Chats</div>';
+            
+            state.chats.forEach(chat => {
+                const isActive = chat.id === state.currentChatId;
+                const item = document.createElement('div');
+                item.className = `group flex items-center justify-between px-3 py-2 rounded-lg text-xs cursor-pointer transition ${isActive ? 'bg-slate-800 text-indigo-400 font-semibold' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`;
+                
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2 truncate pr-2">
+                        <i class="fa-regular fa-message text-[10px]"></i>
+                        <span class="truncate">${escapeHtml(chat.title)}</span>
+                    </div>
+                    <button class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 p-1 text-[10px]" onclick="deleteChat(event, '${chat.id}')">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+
+                item.addEventListener('click', () => loadChat(chat.id));
+                el.chatHistoryList.appendChild(item);
+            });
+        }
+
+        function deleteChat(e, chatId) {
+            e.stopPropagation();
+            state.chats = state.chats.filter(c => c.id !== chatId);
+            if (state.currentChatId === chatId) {
+                state.currentChatId = state.chats.length > 0 ? state.chats[0].id : null;
+            }
+            saveChatsToStorage();
+            renderChatHistory();
+            if (state.currentChatId) {
+                loadChat(state.currentChatId);
+            } else {
+                showWelcomeScreen();
+            }
+        }
+
+        function saveChatsToStorage() {
+            localStorage.setItem('chatbot_chats', JSON.stringify(state.chats));
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+    </script>
+</body>
+</html>
