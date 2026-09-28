@@ -1,591 +1,480 @@
 <!DOCTYPE html>
-<html lang="en" class="dark h-full">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apex AI Studio Desktop</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        dark: {
-                            base: '#0f172a',
-                            surface: '#1e293b',
-                            card: '#334155',
-                            border: '#475569',
-                            hover: '#334155'
-                        },
-                        accent: {
-                            primary: '#6366f1',
-                            hover: '#4f46e5',
-                            glow: 'rgba(99, 102, 241, 0.25)'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Highlight.js for code rendering -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-    <!-- Marked.js for Markdown parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <style>
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.6);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-        .prose pre {
-            background-color: #0f172a !important;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            border: 1px solid #334155;
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .prose code {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.875rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My AI Bot</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 15px 20px;
+      background: #1f2937;
+      border-bottom: 1px solid #374151;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    header h2 {
+      margin: 0;
+      margin-left: auto;
+    }
+
+    input, textarea, button {
+      font-family: inherit;
+    }
+
+    #apiKey {
+      width: 300px;
+      padding: 10px;
+      border: 1px solid #4b5563;
+      border-radius: 8px;
+      background: #111827;
+      color: white;
+    }
+
+    #model {
+      width: 230px;
+      padding: 10px;
+      border: 1px solid #4b5563;
+      border-radius: 8px;
+      background: #111827;
+      color: white;
+    }
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 25px;
+    }
+
+    .message {
+      max-width: 850px;
+      margin: 0 auto 18px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      background: #2563eb;
+    }
+
+    .assistant {
+      background: #1f2937;
+      border: 1px solid #374151;
+    }
+
+    .error {
+      background: #7f1d1d;
+    }
+
+    .role {
+      font-size: 12px;
+      opacity: .7;
+      margin-bottom: 5px;
+    }
+
+    footer {
+      padding: 15px;
+      background: #1f2937;
+      border-top: 1px solid #374151;
+    }
+
+    #inputArea {
+      max-width: 1000px;
+      margin: auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    #messageInput {
+      flex: 1;
+      min-height: 55px;
+      max-height: 180px;
+      resize: vertical;
+      padding: 14px;
+      border: 1px solid #4b5563;
+      border-radius: 10px;
+      background: #111827;
+      color: white;
+      font-size: 16px;
+    }
+
+    #send {
+      width: 100px;
+      border: 0;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #send:hover {
+      background: #1d4ed8;
+    }
+
+    #send:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    #clear {
+      padding: 10px 15px;
+      border: 0;
+      border-radius: 8px;
+      background: #374151;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="bg-dark-base text-slate-100 font-sans h-full flex flex-col overflow-hidden select-none">
-
-    <!-- Password Overlay Modal -->
-    <div id="authOverlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm text-center space-y-4 shadow-2xl">
-            <div class="w-12 h-12 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center mx-auto text-xl">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            <h2 class="text-lg font-bold text-slate-100">تسجيل الدخول للتطبيق</h2>
-            <p class="text-xs text-slate-400">الرجاء إدخال كلمة السر للوصول إلى الواجهة</p>
-            <input type="password" id="appPasswordInput" placeholder="أدخل كلمة السر..." class="w-full bg-slate-800 border border-slate-700 text-slate-100 text-center text-sm rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
-            <p id="authError" class="text-xs text-rose-400 hidden">كلمة السر غير صحيحة!</p>
-            <button id="btnAuth" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg text-sm transition">دخول</button>
-        </div>
-    </div>
-
-    <!-- Window Titlebar -->
-    <header class="bg-slate-950 border-b border-slate-800 h-10 flex items-center justify-between px-3 shrink-0">
-        <div class="flex items-center space-x-2 text-xs font-semibold text-slate-400">
-            <i class="fa-solid font-bold fa-robot text-indigo-400 text-sm"></i>
-            <span>Apex AI Studio Desktop</span>
-            <span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] px-1.5 py-0.5 rounded">v1.2</span>
-        </div>
-        
-        <div class="flex items-center space-x-4">
-            <div id="statusIndicator" class="flex items-center space-x-1.5 text-xs text-amber-400">
-                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                <span id="statusText" class="text-[11px] font-medium">API Key Needed</span>
-            </div>
-            <div class="h-4 w-[1px] bg-slate-800"></div>
-            <button id="btnSettings" class="text-slate-400 hover:text-white transition p-1 text-xs" title="API Settings">
-                <i class="fa-solid fa-gear"></i>
-            </button>
-        </div>
-    </header>
-
-    <!-- Main Application Container -->
-    <div class="flex flex-1 h-[calc(100vh-2.5rem)] overflow-hidden relative">
-        
-        <!-- Sidebar: Chat History -->
-        <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 transition-all duration-200">
-            <div class="p-3 space-y-2">
-                <button id="btnNewChat" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-3 rounded-lg text-sm flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
-                    <i class="fa-solid fa-plus text-xs"></i>
-                    <span>New Conversation</span>
-                </button>
-            </div>
-
-            <div class="flex-1 overflow-y-auto px-2 space-y-1" id="chatHistoryList">
-                <div class="px-3 py-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Recent Chats</div>
-            </div>
-
-            <div class="p-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-                <span class="truncate">Provider: <strong id="lblActiveProvider" class="text-slate-200">Groq Cloud</strong></span>
-                <button id="btnClearHistory" class="text-slate-500 hover:text-rose-400 p-1" title="Clear All History">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Chat Area -->
-        <main class="flex-1 flex flex-col bg-dark-base relative overflow-hidden">
-            
-            <div class="h-14 bg-slate-900/60 backdrop-blur-md border-b border-slate-800 px-4 flex items-center justify-between z-10">
-                <div class="flex items-center space-x-3">
-                    <button id="btnToggleSidebar" class="text-slate-400 hover:text-white p-1">
-                        <i class="fa-solid fa-bars"></i>
-                    </button>
-                    <div>
-                        <h2 id="currentChatTitle" class="text-sm font-semibold text-slate-100 truncate max-w-xs md:max-w-md">New Conversation</h2>
-                        <p class="text-[11px] text-slate-400" id="currentModelLabel">Model: Llama 3.3 70B Versatile</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-2">
-                    <label for="modelSelect" class="text-xs text-slate-400 hidden sm:inline">Model:</label>
-                    <select id="modelSelect" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
-                        <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Groq)</option>
-                        <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Groq)</option>
-                        <option value="qwen-2.5-coder-32b">Qwen 2.5 Coder 32B (Groq)</option>
-                        <option value="mixtral-8x7b-32768">Mixtral 8x7B (Groq)</option>
-                        <option value="gemma2-9b-it">Gemma 2 9B (Groq)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Messages Scroll View -->
-            <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
-                <div id="welcomeState" class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
-                    <div class="w-16 h-16 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 text-2xl shadow-xl">
-                        <i class="fa-solid fa-brain"></i>
-                    </div>
-                    <div class="max-w-md space-y-2">
-                        <h1 class="text-xl font-bold text-slate-100">AI Assistant Ready</h1>
-                        <p class="text-xs text-slate-400">Connect your Groq API key to start fast inference.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Input Bar -->
-            <div class="p-3 md:p-4 bg-slate-900/80 border-t border-slate-800">
-                <form id="chatForm" class="relative flex items-end bg-slate-800/90 border border-slate-700 focus-within:border-indigo-500 rounded-xl px-3 py-2 transition shadow-inner">
-                    <textarea id="userInput" rows="1" placeholder="Type your message or prompt here..." class="w-full bg-transparent text-slate-100 text-sm focus:outline-none resize-none max-h-32 min-h-[38px] py-1.5 pr-10"></textarea>
-                    
-                    <button type="submit" id="btnSend" class="absolute right-2 bottom-2 bg-indigo-600 hover:bg-indigo-500 text-white w-8 h-8 rounded-lg flex items-center justify-center transition disabled:opacity-40 disabled:cursor-not-allowed">
-                        <i class="fa-solid fa-paper-plane text-xs"></i>
-                    </button>
-                </form>
-                <div class="flex justify-between items-center px-1 mt-2 text-[10px] text-slate-500">
-                    <span>Press <kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-700">Enter</kbd> to send, <kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-700">Shift + Enter</kbd> for line break.</span>
-                    <span id="charCounter">0 chars</span>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- API Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-5">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-sliders text-indigo-400"></i>
-                    <h3 class="font-bold text-slate-100 text-base">API Configuration</h3>
-                </div>
-                <button id="btnCloseModal" class="text-slate-400 hover:text-white">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="space-y-4 text-xs">
-                <div>
-                    <label class="block font-semibold text-slate-300 mb-1">API Provider</label>
-                    <select id="apiProviderSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
-                        <option value="groq">Groq Cloud</option>
-                        <option value="openrouter">OpenRouter API</option>
-                    </select>
-                </div>
-
-                <div id="apiKeyContainer">
-                    <label class="block font-semibold text-slate-300 mb-1">API Key</label>
-                    <input type="password" id="txtApiKey" placeholder="gsk_..." class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
-                </div>
-
-                <div id="endpointContainer">
-                    <label class="block font-semibold text-slate-300 mb-1">Endpoint URL</label>
-                    <input type="text" id="txtEndpointUrl" value="https://api.groq.com/openai/v1" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
-                </div>
-            </div>
-
-            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
-                <button id="btnSaveSettings" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-xs transition">
-                    Save Configuration
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const CORRECT_PASSWORD = "1895";
-
-        function verifyPassword() {
-            const input = document.getElementById('appPasswordInput').value.trim();
-            const errorEl = document.getElementById('authError');
-
-            if (input === CORRECT_PASSWORD) {
-                document.getElementById('authOverlay').classList.add('hidden');
-                errorEl.classList.add('hidden');
-            } else {
-                errorEl.classList.remove('hidden');
-            }
-        }
-
-        document.getElementById('btnAuth').addEventListener('click', verifyPassword);
-        document.getElementById('appPasswordInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') verifyPassword();
-        });
-
-        /* Application State */
-        const state = {
-            apiKey: localStorage.getItem('chatbot_api_key') || '',
-            provider: localStorage.getItem('chatbot_provider') || 'groq',
-            endpoint: localStorage.getItem('chatbot_endpoint') || 'https://api.groq.com/openai/v1',
-            selectedModel: 'llama-3.3-70b-versatile',
-            chats: JSON.parse(localStorage.getItem('chatbot_chats') || '[]'),
-            currentChatId: null
-        };
-
-        /* DOM Elements */
-        const el = {
-            settingsModal: document.getElementById('settingsModal'),
-            btnSettings: document.getElementById('btnSettings'),
-            btnCloseModal: document.getElementById('btnCloseModal'),
-            btnSaveSettings: document.getElementById('btnSaveSettings'),
-            apiProviderSelect: document.getElementById('apiProviderSelect'),
-            txtApiKey: document.getElementById('txtApiKey'),
-            txtEndpointUrl: document.getElementById('txtEndpointUrl'),
-            statusIndicator: document.getElementById('statusIndicator'),
-            statusText: document.getElementById('statusText'),
-            modelSelect: document.getElementById('modelSelect'),
-            chatForm: document.getElementById('chatForm'),
-            userInput: document.getElementById('userInput'),
-            messagesContainer: document.getElementById('messagesContainer'),
-            welcomeState: document.getElementById('welcomeState'),
-            chatHistoryList: document.getElementById('chatHistoryList'),
-            btnNewChat: document.getElementById('btnNewChat'),
-            lblActiveProvider: document.getElementById('lblActiveProvider'),
-            currentChatTitle: document.getElementById('currentChatTitle'),
-            currentModelLabel: document.getElementById('currentModelLabel'),
-            sidebar: document.getElementById('sidebar'),
-            btnToggleSidebar: document.getElementById('btnToggleSidebar'),
-            btnClearHistory: document.getElementById('btnClearHistory'),
-            charCounter: document.getElementById('charCounter')
-        };
-
-        window.addEventListener('DOMContentLoaded', () => {
-            initApp();
-            registerEvents();
-        });
-
-        function initApp() {
-            el.txtApiKey.value = state.apiKey;
-            el.apiProviderSelect.value = state.provider;
-            el.txtEndpointUrl.value = state.endpoint;
-            updateProviderUI();
-            updateStatusIndicator();
-            renderChatHistory();
-
-            if (!state.currentChatId && state.chats.length > 0) {
-                loadChat(state.chats[0].id);
-            }
-        }
-
-        function registerEvents() {
-            el.btnSettings.addEventListener('click', () => {
-                el.settingsModal.classList.remove('hidden');
-                el.settingsModal.classList.add('flex');
-            });
-            
-            el.btnCloseModal.addEventListener('click', () => {
-                el.settingsModal.classList.add('hidden');
-                el.settingsModal.classList.remove('flex');
-            });
-
-            el.apiProviderSelect.addEventListener('change', updateProviderUI);
-
-            el.btnSaveSettings.addEventListener('click', () => {
-                state.apiKey = el.txtApiKey.value.trim();
-                state.provider = el.apiProviderSelect.value;
-                state.endpoint = el.txtEndpointUrl.value.trim();
-
-                localStorage.setItem('chatbot_api_key', state.apiKey);
-                localStorage.setItem('chatbot_provider', state.provider);
-                localStorage.setItem('chatbot_endpoint', state.endpoint);
-
-                updateStatusIndicator();
-                el.settingsModal.classList.add('hidden');
-                el.settingsModal.classList.remove('flex');
-            });
-
-            el.modelSelect.addEventListener('change', (e) => {
-                state.selectedModel = e.target.value;
-                el.currentModelLabel.textContent = `Model: ${e.target.options[e.target.selectedIndex].text}`;
-            });
-
-            el.userInput.addEventListener('input', () => {
-                el.userInput.style.height = 'auto';
-                el.userInput.style.height = `${Math.min(el.userInput.scrollHeight, 128)}px`;
-                el.charCounter.textContent = `${el.userInput.value.length} chars`;
-            });
-
-            el.userInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    el.chatForm.dispatchEvent(new Event('submit'));
-                }
-            });
-
-            el.chatForm.addEventListener('submit', handleChatSubmit);
-            el.btnNewChat.addEventListener('click', createNewChat);
-
-            el.btnToggleSidebar.addEventListener('click', () => {
-                el.sidebar.classList.toggle('-ml-64');
-            });
-
-            el.btnClearHistory.addEventListener('click', () => {
-                if (confirm('Are you sure you want to delete all saved conversations?')) {
-                    state.chats = [];
-                    state.currentChatId = null;
-                    localStorage.removeItem('chatbot_chats');
-                    renderChatHistory();
-                    showWelcomeScreen();
-                }
-            });
-        }
-
-        function updateProviderUI() {
-            const provider = el.apiProviderSelect.value;
-            if (provider === 'groq') {
-                el.txtEndpointUrl.value = 'https://api.groq.com/openai/v1';
-                el.lblActiveProvider.textContent = 'Groq Cloud';
-            } else if (provider === 'openrouter') {
-                el.txtEndpointUrl.value = 'https://openrouter.ai/api/v1';
-                el.lblActiveProvider.textContent = 'OpenRouter';
-            }
-        }
-
-        function updateStatusIndicator() {
-            if (!state.apiKey) {
-                el.statusIndicator.className = 'flex items-center space-x-1.5 text-xs text-amber-400';
-                el.statusText.textContent = 'API Key Needed';
-            } else {
-                el.statusIndicator.className = 'flex items-center space-x-1.5 text-xs text-emerald-400';
-                el.statusText.textContent = 'Ready';
-            }
-        }
-
-        async function handleChatSubmit(e) {
-            e.preventDefault();
-            const text = el.userInput.value.trim();
-            if (!text) return;
-
-            if (!state.apiKey) {
-                alert('Please configure your API Key in Settings first.');
-                el.settingsModal.classList.remove('hidden');
-                el.settingsModal.classList.add('flex');
-                return;
-            }
-
-            if (!state.currentChatId) {
-                createNewChat();
-            }
-
-            const currentChat = state.chats.find(c => c.id === state.currentChatId);
-            
-            if (currentChat.messages.length === 0) {
-                currentChat.title = text.length > 28 ? text.substring(0, 28) + '...' : text;
-                el.currentChatTitle.textContent = currentChat.title;
-            }
-
-            const userMsg = { role: 'user', content: text, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
-            currentChat.messages.push(userMsg);
-            
-            el.userInput.value = '';
-            el.userInput.style.height = 'auto';
-            el.charCounter.textContent = '0 chars';
-            
-            renderMessages();
-
-            const assistantMsg = { role: 'assistant', content: 'Thinking...', timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
-            currentChat.messages.push(assistantMsg);
-            
-            const messageIndex = currentChat.messages.length - 1;
-            renderMessages();
-
-            try {
-                // Formatting Endpoint correctly
-                let baseUrl = state.endpoint.trim().replace(/\/+$/, '');
-                if (!baseUrl.endsWith('/chat/completions')) {
-                    baseUrl += '/chat/completions';
-                }
-                
-                const apiMessages = currentChat.messages
-                    .slice(0, -1)
-                    .filter(m => m.content && m.content !== 'Thinking...')
-                    .map(m => ({ role: m.role, content: m.content }));
-
-                const response = await fetch(baseUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: state.selectedModel,
-                        messages: apiMessages
-                    })
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.error?.message || `Status ${response.status}`);
-                }
-
-                const data = await response.json();
-                const resultText = data.choices?.[0]?.message?.content || 'No response generated.';
-
-                currentChat.messages[messageIndex].content = resultText;
-                saveChatsToStorage();
-                renderMessages();
-
-            } catch (err) {
-                currentChat.messages[messageIndex].content = `⚠️ **API Error:** ${err.message}`;
-                saveChatsToStorage();
-                renderMessages();
-            }
-        }
-
-        function createNewChat() {
-            const newChat = {
-                id: 'chat_' + Date.now(),
-                title: 'New Conversation',
-                messages: []
-            };
-            state.chats.unshift(newChat);
-            state.currentChatId = newChat.id;
-            saveChatsToStorage();
-            renderChatHistory();
-            showWelcomeScreen();
-        }
-
-        function loadChat(chatId) {
-            state.currentChatId = chatId;
-            const chat = state.chats.find(c => c.id === chatId);
-            if (!chat) return;
-
-            el.currentChatTitle.textContent = chat.title;
-            renderChatHistory();
-
-            if (chat.messages.length === 0) {
-                showWelcomeScreen();
-            } else {
-                renderMessages();
-            }
-        }
-
-        function showWelcomeScreen() {
-            el.messagesContainer.innerHTML = `
-                <div id="welcomeState" class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
-                    <div class="w-16 h-16 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 text-2xl shadow-xl">
-                        <i class="fa-solid fa-brain"></i>
-                    </div>
-                    <div class="max-w-md space-y-2">
-                        <h1 class="text-xl font-bold text-slate-100">AI Assistant Ready</h1>
-                        <p class="text-xs text-slate-400">Connect your Groq API key to start fast inference.</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderMessages() {
-            const chat = state.chats.find(c => c.id === state.currentChatId);
-            if (!chat || chat.messages.length === 0) return;
-
-            el.messagesContainer.innerHTML = '';
-
-            chat.messages.forEach(msg => {
-                const isUser = msg.role === 'user';
-                const msgWrapper = document.createElement('div');
-                msgWrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`;
-
-                const formattedContent = isUser ? escapeHtml(msg.content) : marked.parse(msg.content);
-
-                msgWrapper.innerHTML = `
-                    <div class="flex items-start space-x-2.5 max-w-[85%] ${isUser ? 'flex-row-reverse space-x-reverse' : ''}">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${isUser ? 'bg-indigo-600 text-white' : 'bg-slate-800 border border-slate-700 text-indigo-400'}">
-                            <i class="${isUser ? 'fa-solid fa-user' : 'fa-solid fa-bot'}"></i>
-                        </div>
-                        <div class="space-y-1">
-                            <div class="p-3.5 rounded-2xl text-xs sm:text-sm prose dark:prose-invert max-w-none ${isUser ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800/90 border border-slate-700 text-slate-200 rounded-tl-none'} shadow-md">
-                                ${formattedContent}
-                            </div>
-                            <div class="text-[10px] text-slate-500 ${isUser ? 'text-right' : 'text-left'}">${msg.timestamp}</div>
-                        </div>
-                    </div>
-                `;
-
-                el.messagesContainer.appendChild(msgWrapper);
-            });
-
-            hljs.highlightAll();
-            el.messagesContainer.scrollTop = el.messagesContainer.scrollHeight;
-        }
-
-        function renderChatHistory() {
-            el.chatHistoryList.innerHTML = '<div class="px-3 py-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Recent Chats</div>';
-            
-            state.chats.forEach(chat => {
-                const isActive = chat.id === state.currentChatId;
-                const item = document.createElement('div');
-                item.className = `group flex items-center justify-between px-3 py-2 rounded-lg text-xs cursor-pointer transition ${isActive ? 'bg-slate-800 text-indigo-400 font-semibold' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`;
-                
-                item.innerHTML = `
-                    <div class="flex items-center space-x-2 truncate pr-2">
-                        <i class="fa-regular fa-message text-[10px]"></i>
-                        <span class="truncate">${escapeHtml(chat.title)}</span>
-                    </div>
-                    <button class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 p-1 text-[10px]" onclick="deleteChat(event, '${chat.id}')">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                `;
-
-                item.addEventListener('click', () => loadChat(chat.id));
-                el.chatHistoryList.appendChild(item);
-            });
-        }
-
-        function deleteChat(e, chatId) {
-            e.stopPropagation();
-            state.chats = state.chats.filter(c => c.id !== chatId);
-            if (state.currentChatId === chatId) {
-                state.currentChatId = state.chats.length > 0 ? state.chats[0].id : null;
-            }
-            saveChatsToStorage();
-            renderChatHistory();
-            if (state.currentChatId) {
-                loadChat(state.currentChatId);
-            } else {
-                showWelcomeScreen();
-            }
-        }
-
-        function saveChatsToStorage() {
-            localStorage.setItem('chatbot_chats', JSON.stringify(state.chats));
-        }
-
-        function escapeHtml(text) {
-            return text.replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-            });
-        }
-    </script>
+
+<body>
+
+<header>
+
+  <h2>🤖 My AI Bot</h2>
+
+  <input
+    id="apiKey"
+    type="password"
+    placeholder="ضع Groq API Key هنا"
+  >
+
+  <input
+    id="model"
+    type="text"
+    value="openai/gpt-oss-120b"
+    placeholder="اسم الموديل"
+  >
+
+  <button id="clear">مسح المحادثة</button>
+
+</header>
+
+
+<main id="chat">
+
+  <div class="message assistant">
+    <div class="role">AI</div>
+    أهلاً بك 👋
+    <br>
+    ضع Groq API Key ثم اكتب رسالتك.
+  </div>
+
+</main>
+
+
+<footer>
+
+  <div id="inputArea">
+
+    <textarea
+      id="messageInput"
+      placeholder="اكتب رسالتك هنا..."
+    ></textarea>
+
+    <button id="send">إرسال</button>
+
+  </div>
+
+</footer>
+
+
+<script>
+
+const API_URL =
+  "https://api.groq.com/openai/v1/chat/completions";
+
+const apiKeyInput =
+  document.getElementById("apiKey");
+
+const modelInput =
+  document.getElementById("model");
+
+const chat =
+  document.getElementById("chat");
+
+const messageInput =
+  document.getElementById("messageInput");
+
+const sendButton =
+  document.getElementById("send");
+
+const clearButton =
+  document.getElementById("clear");
+
+
+// تحميل المفتاح من المتصفح
+apiKeyInput.value =
+  localStorage.getItem("groq_api_key") || "";
+
+
+// سجل المحادثة
+let messages = [];
+
+
+// إضافة رسالة للشاشة
+function addMessage(role, text, className = "") {
+
+  const div = document.createElement("div");
+
+  div.className =
+    "message " +
+    (role === "user" ? "user" : "assistant") +
+    " " +
+    className;
+
+  const roleDiv =
+    document.createElement("div");
+
+  roleDiv.className = "role";
+
+  roleDiv.textContent =
+    role === "user" ? "أنت" : "AI";
+
+  const content =
+    document.createElement("div");
+
+  content.textContent = text;
+
+  div.appendChild(roleDiv);
+  div.appendChild(content);
+
+  chat.appendChild(div);
+
+  chat.scrollTop =
+    chat.scrollHeight;
+
+  return div;
+}
+
+
+// إرسال الرسالة
+async function sendMessage() {
+
+  const apiKey =
+    apiKeyInput.value.trim();
+
+  const model =
+    modelInput.value.trim();
+
+  const text =
+    messageInput.value.trim();
+
+
+  if (!apiKey) {
+
+    alert("ضع Groq API Key أولاً.");
+
+    apiKeyInput.focus();
+
+    return;
+  }
+
+
+  if (!model) {
+
+    alert("اكتب اسم الموديل.");
+
+    modelInput.focus();
+
+    return;
+  }
+
+
+  if (!text) return;
+
+
+  // حفظ المفتاح محليًا
+  localStorage.setItem(
+    "groq_api_key",
+    apiKey
+  );
+
+
+  // إضافة رسالة المستخدم
+  addMessage("user", text);
+
+  messages.push({
+    role: "user",
+    content: text
+  });
+
+
+  messageInput.value = "";
+
+  sendButton.disabled = true;
+
+  sendButton.textContent =
+    "جاري...";
+
+
+  const thinkingMessage =
+    addMessage(
+      "assistant",
+      "يفكر..."
+    );
+
+
+  try {
+
+    const response =
+      await fetch(API_URL, {
+
+        method: "POST",
+
+        headers: {
+
+          "Content-Type":
+            "application/json",
+
+          "Authorization":
+            "Bearer " + apiKey
+
+        },
+
+        body: JSON.stringify({
+
+          model: model,
+
+          messages: messages
+
+        })
+
+      });
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data?.error?.message ||
+        "حدث خطأ في الاتصال بالـ API"
+      );
+
+    }
+
+
+    const answer =
+      data?.choices?.[0]?.message?.content;
+
+
+    if (!answer) {
+
+      throw new Error(
+        "لم يتم استلام رد من الموديل."
+      );
+
+    }
+
+
+    // استبدال "يفكر..."
+    thinkingMessage.remove();
+
+    addMessage(
+      "assistant",
+      answer
+    );
+
+
+    messages.push({
+
+      role: "assistant",
+
+      content: answer
+
+    });
+
+
+  } catch (error) {
+
+    thinkingMessage.remove();
+
+    addMessage(
+      "assistant",
+      "حدث خطأ:\n" +
+      error.message,
+      "error"
+    );
+
+  }
+
+
+  sendButton.disabled = false;
+
+  sendButton.textContent =
+    "إرسال";
+
+  messageInput.focus();
+
+}
+
+
+// زر الإرسال
+sendButton.addEventListener(
+  "click",
+  sendMessage
+);
+
+
+// Ctrl + Enter للإرسال
+messageInput.addEventListener(
+  "keydown",
+  function(event) {
+
+    if (
+      event.ctrlKey &&
+      event.key === "Enter"
+    ) {
+
+      sendMessage();
+
+    }
+
+  }
+);
+
+
+// مسح المحادثة
+clearButton.addEventListener(
+  "click",
+  function() {
+
+    messages = [];
+
+    chat.innerHTML = "";
+
+    addMessage(
+      "assistant",
+      "تم مسح المحادثة. ابدأ محادثة جديدة."
+    );
+
+  }
+);
+
+</script>
+
 </body>
 </html>
