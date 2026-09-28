@@ -136,17 +136,17 @@
                     </button>
                     <div>
                         <h2 id="currentChatTitle" class="text-sm font-semibold text-slate-100 truncate max-w-xs md:max-w-md">New Conversation</h2>
-                        <p class="text-[11px] text-slate-400" id="currentModelLabel">Model: Qwen 2.5 Coder 32B</p>
+                        <p class="text-[11px] text-slate-400" id="currentModelLabel">Model: Llama 3.3 70B</p>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-2">
                     <label for="modelSelect" class="text-xs text-slate-400 hidden sm:inline">Model:</label>
                     <select id="modelSelect" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
-                        <option value="qwen-2.5-coder-32b">Qwen 2.5 Coder 32B (Groq)</option>
-                        <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Groq)</option>
-                        <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill 70B</option>
-                        <option value="local-model">Custom Local Server (Ollama / LM Studio)</option>
+                        <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Groq)</option>
+                        <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Groq)</option>
+                        <option value="mixtral-8x7b-32768">Mixtral 8x7B (Groq)</option>
+                        <option value="gemma2-9b-it">Gemma 2 9B (Groq)</option>
                     </select>
                 </div>
             </div>
@@ -159,15 +159,7 @@
                     </div>
                     <div class="max-w-md space-y-2">
                         <h1 class="text-xl font-bold text-slate-100">AI Assistant Ready</h1>
-                        <p class="text-xs text-slate-400">Connect your Groq or OpenRouter API key to start fast streaming inference, or link your local LM Studio / Colab endpoint.</p>
-                    </div>
-                    <div class="flex gap-2 text-xs">
-                        <button onclick="setPromptSuggestion('Write a Python GUI script using CustomTkinter for a file downloader.')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300">
-                            💻 Python GUI Script
-                        </button>
-                        <button onclick="setPromptSuggestion('Explain how to connect Python desktop client to OpenAI API format.')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300">
-                            🔗 Connect API to Python
-                        </button>
+                        <p class="text-xs text-slate-400">Connect your Groq API key to start fast inference.</p>
                     </div>
                 </div>
             </div>
@@ -195,7 +187,7 @@
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-sliders text-indigo-400"></i>
-                    <h3 class="font-bold text-slate-100 text-base">API & Server Configuration</h3>
+                    <h3 class="font-bold text-slate-100 text-base">API Configuration</h3>
                 </div>
                 <button id="btnCloseModal" class="text-slate-400 hover:text-white">
                     <i class="fa-solid fa-xmark"></i>
@@ -206,21 +198,19 @@
                 <div>
                     <label class="block font-semibold text-slate-300 mb-1">API Provider</label>
                     <select id="apiProviderSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
-                        <option value="groq">Groq Cloud (Fast & Free Tier)</option>
+                        <option value="groq">Groq Cloud</option>
                         <option value="openrouter">OpenRouter API</option>
-                        <option value="local">Local Server / Ngrok / Colab (LM Studio / Ollama)</option>
                     </select>
                 </div>
 
                 <div id="apiKeyContainer">
                     <label class="block font-semibold text-slate-300 mb-1">API Key</label>
                     <input type="password" id="txtApiKey" placeholder="gsk_..." class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
-                    <p class="text-[10px] text-slate-500 mt-1">Keys are stored locally in your browser/app storage only.</p>
                 </div>
 
                 <div id="endpointContainer">
                     <label class="block font-semibold text-slate-300 mb-1">Endpoint URL</label>
-                    <input type="text" id="txtEndpointUrl" placeholder="https://api.groq.com/openai/v1" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
+                    <input type="text" id="txtEndpointUrl" value="https://api.groq.com/openai/v1" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
                 </div>
             </div>
 
@@ -257,7 +247,7 @@
             apiKey: localStorage.getItem('chatbot_api_key') || '',
             provider: localStorage.getItem('chatbot_provider') || 'groq',
             endpoint: localStorage.getItem('chatbot_endpoint') || 'https://api.groq.com/openai/v1',
-            selectedModel: 'qwen-2.5-coder-32b',
+            selectedModel: 'llama-3.3-70b-versatile',
             chats: JSON.parse(localStorage.getItem('chatbot_chats') || '[]'),
             currentChatId: null
         };
@@ -378,13 +368,11 @@
             } else if (provider === 'openrouter') {
                 el.txtEndpointUrl.value = 'https://openrouter.ai/api/v1';
                 el.lblActiveProvider.textContent = 'OpenRouter';
-            } else {
-                el.lblActiveProvider.textContent = 'Local / Custom Server';
             }
         }
 
         function updateStatusIndicator() {
-            if (state.provider !== 'local' && !state.apiKey) {
+            if (!state.apiKey) {
                 el.statusIndicator.className = 'flex items-center space-x-1.5 text-xs text-amber-400';
                 el.statusText.textContent = 'API Key Needed';
             } else {
@@ -393,18 +381,12 @@
             }
         }
 
-        function setPromptSuggestion(text) {
-            el.userInput.value = text;
-            el.userInput.dispatchEvent(new Event('input'));
-            el.userInput.focus();
-        }
-
         async function handleChatSubmit(e) {
             e.preventDefault();
             const text = el.userInput.value.trim();
             if (!text) return;
 
-            if (state.provider !== 'local' && !state.apiKey) {
+            if (!state.apiKey) {
                 alert('Please configure your API Key in Settings first.');
                 el.settingsModal.classList.remove('hidden');
                 el.settingsModal.classList.add('flex');
@@ -431,16 +413,22 @@
             
             renderMessages();
 
-            const assistantMsg = { role: 'assistant', content: '', timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
+            const assistantMsg = { role: 'assistant', content: 'Thinking...', timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
             currentChat.messages.push(assistantMsg);
             
             const messageIndex = currentChat.messages.length - 1;
             renderMessages();
 
             try {
-                const endpoint = `${state.endpoint.replace(/\/+$/, '')}/chat/completions`;
+                const endpointUrl = state.endpoint.replace(/\/+$/, '') + '/chat/completions';
                 
-                const response = await fetch(endpoint, {
+                // Prepare context messages correctly
+                const apiMessages = currentChat.messages
+                    .slice(0, -1)
+                    .filter(m => m.content && m.content !== 'Thinking...')
+                    .map(m => ({ role: m.role, content: m.content }));
+
+                const response = await fetch(endpointUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -448,24 +436,24 @@
                     },
                     body: JSON.stringify({
                         model: state.selectedModel,
-                        messages: currentChat.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
-                        stream: false
+                        messages: apiMessages
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Server returned status ${response.status}`);
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error?.message || `Status ${response.status}`);
                 }
 
                 const data = await response.json();
-                const resultText = data.choices[0]?.message?.content || 'No response generated.';
+                const resultText = data.choices?.[0]?.message?.content || 'No response generated.';
 
                 currentChat.messages[messageIndex].content = resultText;
                 saveChatsToStorage();
                 renderMessages();
 
             } catch (err) {
-                currentChat.messages[messageIndex].content = `⚠️ **Error connecting to API:** ${err.message}. Please check your key or server endpoint in settings.`;
+                currentChat.messages[messageIndex].content = `⚠️ **API Error:** ${err.message}`;
                 saveChatsToStorage();
                 renderMessages();
             }
@@ -507,15 +495,7 @@
                     </div>
                     <div class="max-w-md space-y-2">
                         <h1 class="text-xl font-bold text-slate-100">AI Assistant Ready</h1>
-                        <p class="text-xs text-slate-400">Connect your Groq or OpenRouter API key to start fast streaming inference, or link your local LM Studio / Colab endpoint.</p>
-                    </div>
-                    <div class="flex gap-2 text-xs">
-                        <button onclick="setPromptSuggestion('Write a Python GUI script using CustomTkinter for a file downloader.')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300">
-                            💻 Python GUI Script
-                        </button>
-                        <button onclick="setPromptSuggestion('Explain how to connect Python desktop client to OpenAI API format.')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300">
-                            🔗 Connect API to Python
-                        </button>
+                        <p class="text-xs text-slate-400">Connect your Groq API key to start fast inference.</p>
                     </div>
                 </div>
             `;
