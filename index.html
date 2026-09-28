@@ -6,35 +6,6 @@
     <title>AI Desktop Chatbot</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-<script>
-  // كلمة السر المشفرة لـ "MySecretPass123"
-  // (استبدل هذا الرمز بالرمز المشفر لكلمة السر الخاصة بك)
- const targetHash = "e73300a74797e937d6e87d00f72782e443f11d13f9c313a30c008a9d30fb0e3b";
-
-  async function checkPassword() {
-    const input = prompt("أدخل كلمة السر للوصول للشات:");
-    if (!input) {
-      document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:50px;'>عذراً، الوصول غير مصرح به.</h2>";
-      window.stop();
-      return;
-    }
-
-    
-    const encoder = new TextEncoder();
-    const data = encoder.encode(input);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    if (inputHash !== targetHash) {
-      alert("كلمة السر غير صحيحة!");
-      document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:50px;'>عذراً، كلمة السر خاطئة.</h2>";
-      window.stop();
-    }
-  }
-
-  checkPassword();
-</script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -66,7 +37,6 @@
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* Custom scrollbar styling */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -81,7 +51,6 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #64748b;
         }
-        /* Markdown Code Styles */
         .prose pre {
             background-color: #0f172a !important;
             padding: 1rem;
@@ -99,7 +68,21 @@
 </head>
 <body class="bg-dark-base text-slate-100 font-sans h-full flex flex-col overflow-hidden select-none">
 
-    <!-- Window Titlebar (Simulated Desktop Frame) -->
+    <!-- Password Overlay Modal -->
+    <div id="authOverlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm text-center space-y-4 shadow-2xl">
+            <div class="w-12 h-12 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 class="text-lg font-bold text-slate-100">تسجيل الدخول للتطبيق</h2>
+            <p class="text-xs text-slate-400">الرجاء إدخال كلمة السر للوصول إلى الواجهة</p>
+            <input type="password" id="appPasswordInput" placeholder="أدخل كلمة السر..." class="w-full bg-slate-800 border border-slate-700 text-slate-100 text-center text-sm rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
+            <p id="authError" class="text-xs text-rose-400 hidden">كلمة السر غير صحيحة!</p>
+            <button id="btnAuth" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg text-sm transition">دخول</button>
+        </div>
+    </div>
+
+    <!-- Window Titlebar -->
     <header class="bg-slate-950 border-b border-slate-800 h-10 flex items-center justify-between px-3 shrink-0">
         <div class="flex items-center space-x-2 text-xs font-semibold text-slate-400">
             <i class="fa-solid font-bold fa-robot text-indigo-400 text-sm"></i>
@@ -107,7 +90,6 @@
             <span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] px-1.5 py-0.5 rounded">v1.2</span>
         </div>
         
-        <!-- Status Indicator & Controls -->
         <div class="flex items-center space-x-4">
             <div id="statusIndicator" class="flex items-center space-x-1.5 text-xs text-amber-400">
                 <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
@@ -125,7 +107,6 @@
         
         <!-- Sidebar: Chat History -->
         <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 transition-all duration-200">
-            <!-- New Chat & Search -->
             <div class="p-3 space-y-2">
                 <button id="btnNewChat" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-3 rounded-lg text-sm flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
                     <i class="fa-solid fa-plus text-xs"></i>
@@ -133,13 +114,10 @@
                 </button>
             </div>
 
-            <!-- History Item List -->
             <div class="flex-1 overflow-y-auto px-2 space-y-1" id="chatHistoryList">
                 <div class="px-3 py-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Recent Chats</div>
-                <!-- Dynamic Items Inserted Here -->
             </div>
 
-            <!-- Footer Info -->
             <div class="p-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
                 <span class="truncate">Provider: <strong id="lblActiveProvider" class="text-slate-200">Groq API</strong></span>
                 <button id="btnClearHistory" class="text-slate-500 hover:text-rose-400 p-1" title="Clear All History">
@@ -151,7 +129,6 @@
         <!-- Main Chat Area -->
         <main class="flex-1 flex flex-col bg-dark-base relative overflow-hidden">
             
-            <!-- Chat Header / Controls -->
             <div class="h-14 bg-slate-900/60 backdrop-blur-md border-b border-slate-800 px-4 flex items-center justify-between z-10">
                 <div class="flex items-center space-x-3">
                     <button id="btnToggleSidebar" class="text-slate-400 hover:text-white p-1">
@@ -163,7 +140,6 @@
                     </div>
                 </div>
 
-                <!-- Model Selector Dropdown -->
                 <div class="flex items-center space-x-2">
                     <label for="modelSelect" class="text-xs text-slate-400 hidden sm:inline">Model:</label>
                     <select id="modelSelect" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
@@ -177,7 +153,6 @@
 
             <!-- Messages Scroll View -->
             <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
-                <!-- Welcome Banner -->
                 <div id="welcomeState" class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
                     <div class="w-16 h-16 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 text-2xl shadow-xl">
                         <i class="fa-solid fa-brain"></i>
@@ -228,7 +203,6 @@
             </div>
 
             <div class="space-y-4 text-xs">
-                <!-- Provider Select -->
                 <div>
                     <label class="block font-semibold text-slate-300 mb-1">API Provider</label>
                     <select id="apiProviderSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
@@ -238,17 +212,15 @@
                     </select>
                 </div>
 
-                <!-- API Key Input -->
                 <div id="apiKeyContainer">
                     <label class="block font-semibold text-slate-300 mb-1">API Key</label>
                     <input type="password" id="txtApiKey" placeholder="gsk_..." class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
                     <p class="text-[10px] text-slate-500 mt-1">Keys are stored locally in your browser/app storage only.</p>
                 </div>
 
-                <!-- Custom Endpoint URL (for local / colab) -->
                 <div id="endpointContainer">
                     <label class="block font-semibold text-slate-300 mb-1">Endpoint URL</label>
-                    <input type="text" id="txtEndpointUrl" placeholder="http://localhost:1234/v1" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
+                    <input type="text" id="txtEndpointUrl" placeholder="https://api.groq.com/openai/v1" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 font-mono">
                 </div>
             </div>
 
@@ -261,6 +233,31 @@
     </div>
 
     <script>
+        const targetHash = "e73300a74797e937d6e87d00f72782e443f11d13f9c313a30c008a9d30fb0e3b";
+
+        async function verifyPassword() {
+            const input = document.getElementById('appPasswordInput').value.trim();
+            const errorEl = document.getElementById('authError');
+            
+            const encoder = new TextEncoder();
+            const data = encoder.encode(input);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+            if (inputHash === targetHash) {
+                document.getElementById('authOverlay').classList.add('hidden');
+                errorEl.classList.add('hidden');
+            } else {
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('btnAuth').addEventListener('click', verifyPassword);
+        document.getElementById('appPasswordInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') verifyPassword();
+        });
+
         /* Application State */
         const state = {
             apiKey: localStorage.getItem('chatbot_api_key') || '',
@@ -304,7 +301,6 @@
         });
 
         function initApp() {
-            // Load saved settings
             el.txtApiKey.value = state.apiKey;
             el.apiProviderSelect.value = state.provider;
             el.txtEndpointUrl.value = state.endpoint;
@@ -318,13 +314,18 @@
         }
 
         function registerEvents() {
-            // Settings Modal Toggle
-            el.btnSettings.addEventListener('click', () => el.settingsModal.classList.remove('hidden'), el.settingsModal.classList.add('flex'));
-            el.btnCloseModal.addEventListener('click', () => el.settingsModal.classList.add('hidden'), el.settingsModal.classList.remove('flex'));
+            el.btnSettings.addEventListener('click', () => {
+                el.settingsModal.classList.remove('hidden');
+                el.settingsModal.classList.add('flex');
+            });
+            
+            el.btnCloseModal.addEventListener('click', () => {
+                el.settingsModal.classList.add('hidden');
+                el.settingsModal.classList.remove('flex');
+            });
 
             el.apiProviderSelect.addEventListener('change', updateProviderUI);
 
-            // Save Settings
             el.btnSaveSettings.addEventListener('click', () => {
                 state.apiKey = el.txtApiKey.value.trim();
                 state.provider = el.apiProviderSelect.value;
@@ -339,20 +340,17 @@
                 el.settingsModal.classList.remove('flex');
             });
 
-            // Model Selection
             el.modelSelect.addEventListener('change', (e) => {
                 state.selectedModel = e.target.value;
                 el.currentModelLabel.textContent = `Model: ${e.target.options[e.target.selectedIndex].text}`;
             });
 
-            // Auto-resize textarea
             el.userInput.addEventListener('input', () => {
                 el.userInput.style.height = 'auto';
                 el.userInput.style.height = `${Math.min(el.userInput.scrollHeight, 128)}px`;
                 el.charCounter.textContent = `${el.userInput.value.length} chars`;
             });
 
-            // Key press inside input
             el.userInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -360,18 +358,13 @@
                 }
             });
 
-            // Submit Chat Form
             el.chatForm.addEventListener('submit', handleChatSubmit);
-
-            // New Chat Button
             el.btnNewChat.addEventListener('click', createNewChat);
 
-            // Toggle Sidebar
             el.btnToggleSidebar.addEventListener('click', () => {
                 el.sidebar.classList.toggle('-ml-64');
             });
 
-            // Clear All History
             el.btnClearHistory.addEventListener('click', () => {
                 if (confirm('Are you sure you want to delete all saved conversations?')) {
                     state.chats = [];
@@ -424,35 +417,26 @@
                 return;
             }
 
-            // Ensure active chat exists
             if (!state.currentChatId) {
                 createNewChat();
             }
 
             const currentChat = state.chats.find(c => c.id === state.currentChatId);
             
-            // Set chat title if first message
             if (currentChat.messages.length === 0) {
                 currentChat.title = text.length > 28 ? text.substring(0, 28) + '...' : text;
                 el.currentChatTitle.textContent = currentChat.title;
             }
 
-            // Push User Message
             const userMsg = { role: 'user', content: text, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
             currentChat.messages.push(userMsg);
             
-            // Reset Input UI
             el.userInput.value = '';
             el.userInput.style.height = 'auto';
             el.charCounter.textContent = '0 chars';
             
-            // Hide welcome screen if present
-            if (el.welcomeState) el.welcomeState.remove();
-
-            // Render Messages
             renderMessages();
 
-            // Bot Response Placeholder
             const assistantMsg = { role: 'assistant', content: '', timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
             currentChat.messages.push(assistantMsg);
             
@@ -460,7 +444,6 @@
             renderMessages();
 
             try {
-                // Call OpenAI-Compatible Endpoint API
                 const endpoint = `${state.endpoint.replace(/\/+$/, '')}/chat/completions`;
                 
                 const response = await fetch(endpoint, {
@@ -483,7 +466,6 @@
                 const data = await response.json();
                 const resultText = data.choices[0]?.message?.content || 'No response generated.';
 
-                // Update assistant content
                 currentChat.messages[messageIndex].content = resultText;
                 saveChatsToStorage();
                 renderMessages();
@@ -575,10 +557,7 @@
                 el.messagesContainer.appendChild(msgWrapper);
             });
 
-            // Highlight Code Blocks
             hljs.highlightAll();
-
-            // Auto-scroll to bottom
             el.messagesContainer.scrollTop = el.messagesContainer.scrollHeight;
         }
 
