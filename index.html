@@ -233,19 +233,13 @@
     </div>
 
     <script>
-        const targetHash = "e73300a74797e937d6e87d00f72782e443f11d13f9c313a30c008a9d30fb0e3b";
+        const CORRECT_PASSWORD = "1895";
 
-        async function verifyPassword() {
+        function verifyPassword() {
             const input = document.getElementById('appPasswordInput').value.trim();
             const errorEl = document.getElementById('authError');
-            
-            const encoder = new TextEncoder();
-            const data = encoder.encode(input);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-            if (inputHash === targetHash) {
+            if (input === CORRECT_PASSWORD) {
                 document.getElementById('authOverlay').classList.add('hidden');
                 errorEl.classList.add('hidden');
             } else {
