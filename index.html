@@ -136,7 +136,7 @@
                     </button>
                     <div>
                         <h2 id="currentChatTitle" class="text-sm font-semibold text-slate-100 truncate max-w-xs md:max-w-md">New Conversation</h2>
-                        <p class="text-[11px] text-slate-400" id="currentModelLabel">Model: Llama 3.3 70B</p>
+                        <p class="text-[11px] text-slate-400" id="currentModelLabel">Model: Llama 3.3 70B Versatile</p>
                     </div>
                 </div>
 
@@ -145,6 +145,7 @@
                     <select id="modelSelect" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
                         <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Groq)</option>
                         <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Groq)</option>
+                        <option value="qwen-2.5-coder-32b">Qwen 2.5 Coder 32B (Groq)</option>
                         <option value="mixtral-8x7b-32768">Mixtral 8x7B (Groq)</option>
                         <option value="gemma2-9b-it">Gemma 2 9B (Groq)</option>
                     </select>
@@ -422,7 +423,6 @@
             try {
                 const endpointUrl = state.endpoint.replace(/\/+$/, '') + '/chat/completions';
                 
-                // Prepare context messages correctly
                 const apiMessages = currentChat.messages
                     .slice(0, -1)
                     .filter(m => m.content && m.content !== 'Thinking...')
