@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Desktop Chatbot</title>
+    <title>Apex AI Studio Desktop</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -119,7 +119,7 @@
             </div>
 
             <div class="p-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-                <span class="truncate">Provider: <strong id="lblActiveProvider" class="text-slate-200">Groq API</strong></span>
+                <span class="truncate">Provider: <strong id="lblActiveProvider" class="text-slate-200">Groq Cloud</strong></span>
                 <button id="btnClearHistory" class="text-slate-500 hover:text-rose-400 p-1" title="Clear All History">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -421,14 +421,18 @@
             renderMessages();
 
             try {
-                const endpointUrl = state.endpoint.replace(/\/+$/, '') + '/chat/completions';
+                // Formatting Endpoint correctly
+                let baseUrl = state.endpoint.trim().replace(/\/+$/, '');
+                if (!baseUrl.endsWith('/chat/completions')) {
+                    baseUrl += '/chat/completions';
+                }
                 
                 const apiMessages = currentChat.messages
                     .slice(0, -1)
                     .filter(m => m.content && m.content !== 'Thinking...')
                     .map(m => ({ role: m.role, content: m.content }));
 
-                const response = await fetch(endpointUrl, {
+                const response = await fetch(baseUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
