@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Venice Light Chat</title>
-    <!-- Tailwind CSS للتنسيق السريع والخفيف -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 h-screen flex flex-col font-sans">
@@ -17,7 +17,7 @@
 
     <!-- Chat Messages Container -->
     <main id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <div class="bg-slate-800 p-3 rounded-lg max-w-[85%] self-start border border-slate-700 text-sm leading-relaxed">
+        <div class="bg-slate-800 p-3 rounded-lg max-w-[85%] border border-slate-700 text-sm leading-relaxed">
             مرحبًا! هذه واجهة خفيفة للاتصال بنموذج Venice AI بدون أي قيود أو ثقل على الموبايل. اكتب سؤالك وستصلك الإجابة فورًا.
         </div>
     </main>
@@ -43,8 +43,8 @@
     </footer>
 
     <script>
-        // ضع مفتاح الـ API الخاص بك هنا (سواء من OpenRouter أو Venice)
-        const API_KEY = "YOUR_API_KEY_HERE"; 
+        // تم دمج مفتاح الـ API الخاص بك هنا
+        const API_KEY = "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"; 
 
         async function handleSubmit(e) {
             e.preventDefault();
@@ -55,33 +55,33 @@
             const text = input.value.trim();
             if (!text) return;
 
-            // 1. إضافة رسالة المستخدم
+            // 1. عرض رسالة المستخدم
             chatBox.innerHTML += `
-                <div class="bg-teal-700 text-white p-3 rounded-lg max-w-[85%] mr-auto text-sm leading-relaxed shadow-sm">
+                <div class="bg-teal-700 text-white p-3 rounded-lg max-w-[85%] ms-auto text-sm leading-relaxed shadow-sm">
                     ${escapeHtml(text)}
                 </div>
             `;
             input.value = "";
             scrollToBottom();
 
-            // 2. إضافة مؤشر الانتظار
+            // 2. مؤشر التفكير
             const loadingId = "loading-" + Date.now();
             chatBox.innerHTML += `
-                <div id="${loadingId}" class="bg-slate-800 p-3 rounded-lg max-w-[85%] ml-auto border border-slate-700 text-sm text-slate-400 animate-pulse">
+                <div id="${loadingId}" class="bg-slate-800 p-3 rounded-lg max-w-[85%] me-auto border border-slate-700 text-sm text-slate-400 animate-pulse">
                     جاري التفكير...
                 </div>
             `;
             scrollToBottom();
 
-            // تعطيل زر الإرسال أثناء المعالجة
             sendBtn.disabled = true;
 
             try {
-                // الاتصال بـ OpenRouter لاستخدام نموذج Venice المجاني وغير المقيد
                 const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${API_KEY}`,
+                        "HTTP-Referer": window.location.origin,
+                        "X-Title": "Aboghady Chatbot",
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
@@ -91,24 +91,29 @@
                 });
 
                 const data = await response.json();
-                document.getElementById(loadingId).remove();
+                
+                const loader = document.getElementById(loadingId);
+                if (loader) loader.remove();
 
-                if (data.choices && data.choices[0]) {
+                if (response.ok && data.choices && data.choices[0]) {
                     const aiReply = data.choices[0].message.content;
                     chatBox.innerHTML += `
-                        <div class="bg-slate-800 p-3 rounded-lg max-w-[85%] ml-auto border border-slate-700 text-sm leading-relaxed text-slate-100">
+                        <div class="bg-slate-800 p-3 rounded-lg max-w-[85%] me-auto border border-slate-700 text-sm leading-relaxed text-slate-100">
                             ${escapeHtml(aiReply).replace(/\n/g, '<br>')}
                         </div>
                     `;
                 } else {
-                    throw new Error("فشل الحصول على رد من الـ API");
+                    const errorMsg = data.error ? data.error.message : "فشل الاستجابة من السيرفر";
+                    throw new Error(errorMsg);
                 }
 
             } catch (err) {
-                document.getElementById(loadingId).remove();
+                const loader = document.getElementById(loadingId);
+                if (loader) loader.remove();
+                
                 chatBox.innerHTML += `
-                    <div class="bg-red-900/50 text-red-200 border border-red-800 p-3 rounded-lg max-w-[85%] ml-auto text-sm">
-                        حدث خطأ أثناء الاتصال بالنموذج. تأكد من صحة الـ API Key وإعدادات الشبكة.
+                    <div class="bg-red-900/50 text-red-200 border border-red-800 p-3 rounded-lg max-w-[85%] me-auto text-sm">
+                        <b>خطأ:</b> ${escapeHtml(err.message)}
                     </div>
                 `;
             } finally {
