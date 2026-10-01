@@ -1,140 +1,249 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Venice Light Chat</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 h-screen flex flex-col font-sans">
 
-    <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 p-4 text-center shadow-md">
-        <h1 class="text-xl font-bold text-teal-400">Venice Uncensored Chat</h1>
-        <p class="text-xs text-slate-400 mt-1">واجهة خفيفة ومخصصة للموبايل</p>
-    </header>
+    <title>تحديث النظام</title>
 
-    <!-- Chat Messages Container -->
-    <main id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <div class="bg-slate-800 p-3 rounded-lg max-w-[85%] border border-slate-700 text-sm leading-relaxed">
-            مرحبًا! هذه واجهة خفيفة للاتصال بنموذج Venice AI بدون أي قيود أو ثقل على الموبايل. اكتب سؤالك وستصلك الإجابة فورًا.
-        </div>
-    </main>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-    <!-- Input Area -->
-    <footer class="bg-slate-800 p-3 border-t border-slate-700">
-        <form id="chat-form" onsubmit="handleSubmit(event)" class="flex gap-2 max-w-4xl mx-auto">
-            <input 
-                type="text" 
-                id="user-input" 
-                placeholder="اكتب رسالتك هنا..." 
-                required
-                class="flex-1 bg-slate-900 text-slate-100 text-sm rounded-lg px-4 py-3 border border-slate-700 focus:outline-none focus:border-teal-500"
-            >
-            <button 
-                type="submit" 
-                id="send-btn"
-                class="bg-teal-600 hover:bg-teal-500 text-white font-medium px-5 py-3 rounded-lg text-sm transition-all flex items-center justify-center min-w-[70px]"
-            >
-                إرسال
-            </button>
-        </form>
-    </footer>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #eef3f8, #dfe8f1);
+            color: #333;
+        }
 
-    <script>
-        // تم دمج مفتاح الـ API الخاص بك هنا
-        const API_KEY = "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"; 
+        .container {
+            width: min(92%, 560px);
+            padding: 35px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+            text-align: center;
+        }
 
-        async function handleSubmit(e) {
-            e.preventDefault();
-            const input = document.getElementById("user-input");
-            const chatBox = document.getElementById("chat-box");
-            const sendBtn = document.getElementById("send-btn");
+        .icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: #e8f1ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
 
-            const text = input.value.trim();
-            if (!text) return;
+        h1 {
+            margin: 0 0 10px;
+            color: #0056b3;
+            font-size: 27px;
+        }
 
-            // 1. عرض رسالة المستخدم
-            chatBox.innerHTML += `
-                <div class="bg-teal-700 text-white p-3 rounded-lg max-w-[85%] ms-auto text-sm leading-relaxed shadow-sm">
-                    ${escapeHtml(text)}
-                </div>
-            `;
-            input.value = "";
-            scrollToBottom();
+        .description {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.7;
+        }
 
-            // 2. مؤشر التفكير
-            const loadingId = "loading-" + Date.now();
-            chatBox.innerHTML += `
-                <div id="${loadingId}" class="bg-slate-800 p-3 rounded-lg max-w-[85%] me-auto border border-slate-700 text-sm text-slate-400 animate-pulse">
-                    جاري التفكير...
-                </div>
-            `;
-            scrollToBottom();
+        .loader {
+            width: 55px;
+            height: 55px;
+            margin: 20px auto;
+            border: 5px solid #e9ecef;
+            border-top-color: #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
 
-            sendBtn.disabled = true;
-
-            try {
-                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${API_KEY}`,
-                        "HTTP-Referer": window.location.origin,
-                        "X-Title": "Aboghady Chatbot",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        "model": "venice/uncensored:free",
-                        "messages": [{ "role": "user", "content": text }]
-                    })
-                });
-
-                const data = await response.json();
-                
-                const loader = document.getElementById(loadingId);
-                if (loader) loader.remove();
-
-                if (response.ok && data.choices && data.choices[0]) {
-                    const aiReply = data.choices[0].message.content;
-                    chatBox.innerHTML += `
-                        <div class="bg-slate-800 p-3 rounded-lg max-w-[85%] me-auto border border-slate-700 text-sm leading-relaxed text-slate-100">
-                            ${escapeHtml(aiReply).replace(/\n/g, '<br>')}
-                        </div>
-                    `;
-                } else {
-                    const errorMsg = data.error ? data.error.message : "فشل الاستجابة من السيرفر";
-                    throw new Error(errorMsg);
-                }
-
-            } catch (err) {
-                const loader = document.getElementById(loadingId);
-                if (loader) loader.remove();
-                
-                chatBox.innerHTML += `
-                    <div class="bg-red-900/50 text-red-200 border border-red-800 p-3 rounded-lg max-w-[85%] me-auto text-sm">
-                        <b>خطأ:</b> ${escapeHtml(err.message)}
-                    </div>
-                `;
-            } finally {
-                sendBtn.disabled = false;
-                scrollToBottom();
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
             }
         }
 
-        function scrollToBottom() {
-            const chatBox = document.getElementById("chat-box");
-            chatBox.scrollTop = chatBox.scrollHeight;
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            margin: 25px 0 12px;
+            background: #e9ecef;
+            border-radius: 20px;
+            overflow: hidden;
         }
 
-        function escapeHtml(text) {
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #3498db;
+            transition: width 0.3s ease;
         }
-    </script>
+
+        #progressText {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .success {
+            color: #198754 !important;
+        }
+
+        .error {
+            color: #dc3545 !important;
+        }
+
+        button {
+            display: none;
+            margin-top: 22px;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            background: #0056b3;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #004494;
+        }
+
+        .notice {
+            margin-top: 25px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            color: #777;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="icon">⚙️</div>
+
+    <h1>جاري تحديث النظام...</h1>
+
+    <p class="description">
+        يرجى الانتظار حتى يتم التحقق من المكونات المطلوبة.
+    </p>
+
+    <div class="loader" id="loader"></div>
+
+    <div class="progress-container">
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <div id="progressText">0%</div>
+
+    <p id="status">التحضير للتحديث...</p>
+
+    <button id="continueBtn">
+        متابعة
+    </button>
+
+    <div class="notice">
+        هذه صفحة تعليمية لمحاكاة عملية تحديث النظام.
+        لا يتم تشغيل أو تثبيت أي ملفات تنفيذية.
+    </div>
+
+</div>
+
+<script>
+    "use strict";
+
+    const progress = document.getElementById("progress");
+    const progressText = document.getElementById("progressText");
+    const status = document.getElementById("status");
+    const loader = document.getElementById("loader");
+    const continueBtn = document.getElementById("continueBtn");
+
+    const steps = [
+        {
+            percent: 20,
+            text: "جاري فحص الاتصال..."
+        },
+        {
+            percent: 40,
+            text: "جاري التحقق من المكونات..."
+        },
+        {
+            percent: 60,
+            text: "جاري تجهيز ملفات التحديث..."
+        },
+        {
+            percent: 80,
+            text: "جاري التحقق من سلامة الملفات..."
+        },
+        {
+            percent: 100,
+            text: "اكتمل التحديث بنجاح."
+        }
+    ];
+
+    let currentStep = 0;
+
+    function updateProgress() {
+
+        if (currentStep >= steps.length) {
+            finishUpdate();
+            return;
+        }
+
+        const step = steps[currentStep];
+
+        progress.style.width = step.percent + "%";
+        progressText.textContent = step.percent + "%";
+        status.textContent = step.text;
+
+        currentStep++;
+
+        setTimeout(updateProgress, 900);
+    }
+
+    function finishUpdate() {
+
+        loader.style.display = "none";
+
+        status.textContent =
+            "تم التحقق من جميع المكونات بنجاح.";
+
+        status.classList.add("success");
+
+        continueBtn.style.display = "inline-block";
+    }
+
+    continueBtn.addEventListener("click", function () {
+
+        status.textContent =
+            "تمت المتابعة بنجاح.";
+
+        continueBtn.disabled = true;
+        continueBtn.textContent = "تم";
+    });
+
+    // بدء المحاكاة بعد فترة قصيرة
+    setTimeout(updateProgress, 1200);
+</script>
+
 </body>
 </html>
+```
